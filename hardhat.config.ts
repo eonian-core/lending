@@ -9,6 +9,7 @@ import "hardhat-deploy";
 import "solidity-coverage";
 
 import "./tasks";
+import { getHardhatNetworkConfiguration } from "./config/fork";
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -25,63 +26,7 @@ const config: HardhatUserConfig = {
         ],
     },
     networks: {
-        hardhat: {
-            companionNetworks: {
-                mainnet: process.env.FORKING_NETWORK?.toLowerCase()!,
-            },
-            forking: {
-                enabled: true,
-                url: process.env[
-                    `${process.env.FORKING_NETWORK?.toUpperCase()}_RPC_URL`
-                ]!,
-            },
-            autoImpersonate: true,
-            gasPrice: 1000000000,
-        },
-        linea: {
-            chainId: 59144,
-            url: process.env.LINEA_RPC_URL,
-            accounts: [process.env.LINEA_DEPLOYER!],
-            verify: {
-                etherscan: {
-                    apiUrl: process.env.LINEA_EXPLORER_API_URL,
-                    apiKey: process.env.LINEA_EXPLORER_API_KEY,
-                },
-            },
-        },
-        linea_goerli: {
-            chainId: 59140,
-            url: process.env.LINEA_GOERLI_RPC_URL,
-            accounts: [process.env.LINEA_GOERLI_DEPLOYER!],
-            verify: {
-                etherscan: {
-                    apiUrl: process.env.LINEA_GOERLI_EXPLORER_API_URL,
-                    apiKey: process.env.LINEA_GOERLI_EXPLORER_API_KEY,
-                },
-            },
-        },
-        linea_sepolia: {
-            chainId: 59141,
-            url: process.env.LINEA_SEPOLIA_RPC_URL,
-            accounts: [process.env.LINEA_SEPOLIA_DEPLOYER!],
-            verify: {
-                etherscan: {
-                    apiUrl: process.env.LINEA_SEPOLIA_EXPLORER_API_URL,
-                    apiKey: process.env.LINEA_SEPOLIA_EXPLORER_API_KEY,
-                },
-            },
-        },
-        omni_testnet: {
-            chainId: 165,
-            url: process.env.OMNI_TESTNET_RPC_URL,
-            accounts: [process.env.OMNI_TESTNET_DEPLOYER!],
-            verify: {
-                etherscan: {
-                    apiUrl: process.env.OMNI_TESTNET_EXPLORER_API_URL,
-                    apiKey: process.env.OMNI_TESTNET_EXPLORER_API_KEY,
-                },
-            },
-        },
+        hardhat: getHardhatNetworkConfiguration(),
     },
     namedAccounts: {
         deployer: {

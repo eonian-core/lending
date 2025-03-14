@@ -19,3 +19,7 @@ export type MarketConfig = {
     collateralFactor?: number;
     toSymbol?: string;
 };
+
+export enum NetworkName {
+    BSC = 'BSC'
+}
