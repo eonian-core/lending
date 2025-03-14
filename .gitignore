@@ -2,6 +2,7 @@ artifacts
 cache
 node_modules
 networks
+deployments/hardhat
 
 ## key
 .accounts.json
