@@ -1,6 +1,7 @@
 import hre from 'hardhat'
 import { HardhatNetworkUserConfig } from "hardhat/types";
 import { NetworkName } from "../types";
+import { getForkingNetwork } from './networks';
 
 export function getHardhatNetworkConfiguration(): HardhatNetworkUserConfig {
     const forkingNetwork = getForkingNetwork()
@@ -42,18 +43,6 @@ function forkWithAutoMining(url: string): HardhatNetworkUserConfig {
 
 function noFork(): HardhatNetworkUserConfig {
     return {}
-}
-
-function getForkingNetwork(): NetworkName | null {
-    const forkingNetwork = process.env.FORKING_NETWORK || ''
-    if (!forkingNetwork) {
-        return null
-    }
-    const availableNetworks = Object.values(NetworkName) as string[]
-    if (typeof forkingNetwork === 'string' && availableNetworks.indexOf(forkingNetwork) >= 0) {
-        return forkingNetwork as NetworkName
-    }
-    throw new Error(`Unknown forking network: ${forkingNetwork}`)
 }
 
 function getForkRpcURL(forkingNetwork: NetworkName): string {

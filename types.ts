@@ -1,25 +1,44 @@
-export type ProtocolConfig = {
-    [network: string]: ProtocolNetworkConfig;
-};
-
-export type ProtocolNetworkConfig = {
-    timelock?: `0x${string}`;
-    multisig?: `0x${string}`;
-    markets: {
-        [symbol: string]: MarketConfig;
-    };
-};
-
 export type MarketConfig = {
-    source: "chainlink";
-    priceFeed: `0x${string}`;
-    baseUnit: `1${string}`;
-    underlyingDecimals: number;
-    reserveFactor?: number;
-    collateralFactor?: number;
-    toSymbol?: string;
+    underlyingTokenAddress: string;
+    reserveFactor: string;
+    collateralFactor: string;
+    initialExchangeRate: string;
+    interestRateModel: InterestRateModel;
+    oracle: OracleConfig;
 };
+
+export type OracleConfig = {
+    type: OracleType;
+    source: string; // ID (pyth) or address (chainlink, uniswap twap)
+}
+
+export interface MarketConfigResolved extends MarketConfig {
+    oracle: OracleConfigResolved;
+    symbol: string;
+    name: string;
+    underlyingToken: {
+        address: string;
+        symbol: string;
+        decimals: number;
+    }
+}
+
+export interface OracleConfigResolved extends OracleConfig {
+    decimals: number;
+}
+
+export enum OracleType {
+    UNISWAP_V3_TWAP = 'UNISWAP_V3_TWAP',
+    CHAINLINK = 'CHAINLINK',
+    PYTH = 'PYTH',
+}
 
 export enum NetworkName {
     BSC = 'BSC'
+}
+
+export enum InterestRateModel {
+    STABLE = 'StableRateModel',
+    MEDIUM = 'MediumRateModel',
+    VOLATILE = 'VolatileRateModel',
 }
