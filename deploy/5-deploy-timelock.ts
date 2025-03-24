@@ -17,8 +17,8 @@ const func: DeployFunction = async ({
         args: [
             10,
             [
-                "0xe3CDa0A0896b70F0eBC6A1848096529AA7AEe9eE",
-                "0x57cd331C7b2c7582625810465Ea3CF9bdcA21236",
+                "0x0000000000000000000000000000000000000000",
+                "0x0000000000000000000000000000000000000000",
             ],
             ["0x0000000000000000000000000000000000000000"],
             "0x0000000000000000000000000000000000000000",
@@ -28,5 +28,7 @@ const func: DeployFunction = async ({
 
 const tags = ["timelock-controller"];
 export { tags };
+
+func.skip = async () => true // Disable for now
 
 export default func;

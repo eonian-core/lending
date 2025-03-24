@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import { DEFAULT_ORACLE_DEPLOY_NAME, DEFAULT_ORACLE_CONTRACT } from "./oracle/deploy";
 import { HardhatRuntimeEnvironment, TaskArguments } from "hardhat/types";
 
-task("initial-setup", "Performs initial setup of the contract")
+task("initial-setup", "Performs initial setup of the protocol")
     .addParam("oracleName", "The deployment name (key) of the price oracle to use", DEFAULT_ORACLE_DEPLOY_NAME)    
     .addParam("oracleContract", "The contract name of the price oracle to use", DEFAULT_ORACLE_CONTRACT)    
     .setAction(async (args, hre) => {
