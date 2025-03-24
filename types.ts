@@ -3,6 +3,7 @@ export type MarketConfig = {
     reserveFactor: string;
     collateralFactor: string;
     initialExchangeRate: string;
+    decimals: number;
     interestRateModel: InterestRateModel;
     oracle: OracleConfig;
 };

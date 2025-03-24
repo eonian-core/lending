@@ -2,19 +2,21 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { InterestRateModel, MarketConfig, MarketConfigResolved, NetworkName, OracleConfig, OracleConfigResolved, OracleType } from "../types";
 import { resolveNetwork } from "./networks";
 import { CToken } from "contracts";
-import { IAggregatorV3 } from "index";
+import { IAggregatorV3 } from "contracts/PriceOracle/ChainlinkPriceOracle.sol";
 
 const MARKET_TOKEN_NAME_SUFFIX = 'Eonian Market Token' // E.g. "USDC Eonian Market Token"
 const MARKET_TOKEN_SYMBOL_PREFIX = 'emt' // E.g. emtUSDC
+const MARKET_TOKEN_DECIMALS = 8
 
-const lookupMapOfMarkets = {
+const lookupMapOfMarkets: Record<NetworkName, Record<string, MarketConfig>> = {
     [NetworkName.BSC]: {
-        BNB: {
+        WBNB: {
             underlyingTokenAddress: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
             collateralFactor: '0.8',
             reserveFactor: '0.13',
             initialExchangeRate: '0.02',
             interestRateModel: InterestRateModel.MEDIUM,
+            decimals: MARKET_TOKEN_DECIMALS,
             oracle: {
                 type: OracleType.CHAINLINK,
                 source: "0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE",
@@ -26,13 +28,14 @@ const lookupMapOfMarkets = {
             reserveFactor: '0.13',
             initialExchangeRate: '0.02',
             interestRateModel: InterestRateModel.STABLE,
+            decimals: MARKET_TOKEN_DECIMALS,
             oracle: {
                 type: OracleType.CHAINLINK,
                 source: "0xB97Ad0E74fa7d920791E90258A6E2085088b4320",
             }
         }
     }
-} satisfies Record<NetworkName, Record<string, MarketConfig>>;
+};
 
 /**
  * Validates and returns markets for the current network. 
