@@ -394,7 +394,7 @@ contract RewardDistributor is
     }
 
     function getBlockNumber() public view returns (uint32) {
-        return safe32(block.timestamp, "block number exceeds 32 bits");
+        return safe32(block.number, "block number exceeds 32 bits");
     }
 
     function _grantReward(
