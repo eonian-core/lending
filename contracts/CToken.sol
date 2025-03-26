@@ -236,7 +236,7 @@ abstract contract CToken is
      *  This exists mainly for inheriting test contracts to stub this result.
      */
     function getBlockNumber() internal view virtual returns (uint256) {
-        return block.timestamp;
+        return block.number;
     }
 
     /**

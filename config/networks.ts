@@ -1,6 +1,24 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { NetworkName } from "../types"
 
+const SECONDS_PER_YEAR = 31536000
+const SECONDS_PER_BLOCK: Record<NetworkName, number> = {
+    [NetworkName.BSC]: 3.0
+}
+
+export function getSecondsPerBlock(hre: HardhatRuntimeEnvironment): number {
+    const network = resolveNetwork(hre)
+    if (network === null) {
+        throw new Error('Network is unknown')
+    }
+    return SECONDS_PER_BLOCK[network]
+}
+
+export function getBlocksPerYear(hre: HardhatRuntimeEnvironment): number {
+    const secondsPerBlock = getSecondsPerBlock(hre)
+    return Math.floor(SECONDS_PER_YEAR / secondsPerBlock)
+}
+
 export function resolveNetwork(hre: HardhatRuntimeEnvironment): NetworkName | null {
     const hardhatNetwork = hre.network.name
 
