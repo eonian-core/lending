@@ -2,24 +2,14 @@ import { expect } from 'chai'
 import hre from 'hardhat'
 import { InterestRateModel } from '../types'
 import { Comptroller, Unitroller } from 'contracts'
-import { getAddressesOfMarkets } from '../tasks/_utils'
+import { getAddressesOfMarkets, getComptrollerContract } from '../tasks/_utils'
 import { getMarkets } from '../config/markets'
 import * as helpers from '@nomicfoundation/hardhat-network-helpers'
-import { silentConsole } from './helpers/silent-console'
+import { deploy, deployFixture } from './helpers/deploy-fixture'
 
 describe('Deploy', () => {
-    async function deploy() {
-        await silentConsole(async () => {
-            await hre.run('initial-setup', { oracleName: 'Oracle' })
-        })
-    }
-
-    async function setup() {
-        await deploy()
-    } 
-
     beforeEach(async () => {
-        await helpers.loadFixture(setup)
+        await helpers.loadFixture(deployFixture)
     })
 
     it('Should deploy and attach markets via initial setup', async () => {
@@ -73,5 +63,16 @@ describe('Deploy', () => {
 
         expect(addressesAfterFirstDeploy.length).to.be.eq(addressesAfterSecondDeploy.length)
         expect(addressesAfterFirstDeploy).to.deep.equal(addressesAfterSecondDeploy) 
+    })
+
+    it('Should not set collateral factor if nothing is supplied', async () => {
+        const addressesOfMarkets = await getAddressesOfMarkets(hre)
+        const comptrollerContract = await getComptrollerContract(hre)
+        const addresses = Object.values(addressesOfMarkets)
+        for (const marketAddress of addresses) {
+            const marketData = await comptrollerContract.markets(marketAddress)
+            const collateralFactor = marketData.collateralFactorMantissa.toString()
+            expect(collateralFactor).to.be.eq('0')
+        }
     })
 })
