@@ -1,80 +1,78 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { BigNumber } from "ethers";
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { DeployFunction } from 'hardhat-deploy/types';
+import { getBlocksPerYear, getSecondsPerBlock } from '../config/networks';
+import { InterestRateModel } from '../types';
+import { BigNumber } from 'ethers';
+import { getDeployerAddress } from '../tasks/_utils';
 
-interface IModelDefinition {
-    blocksPerYear: number;
-    baseRatePerYear: BigNumber;
-    multiplerPerYear: BigNumber;
-    jumpMultiplierPerYear: BigNumber;
-    kink: BigNumber;
-    owner: string;
-    name: string;
+interface Rates {
+    baseRatePerYear: number;
+    multiplerPerYear: number;
+    jumpMultiplierPerYear: number;
 }
 
-const func: DeployFunction = async ({
-    getNamedAccounts,
-    deployments: { deploy, getOrNull },
-    ethers,
-    network,
-}: HardhatRuntimeEnvironment) => {
-    const { deployer } = await getNamedAccounts();
+const lookupMapOfBaseRates: Record<InterestRateModel, Rates> = {
+    [InterestRateModel.STABLE]: {
+        baseRatePerYear: 0,
+        multiplerPerYear: 0.05,
+        jumpMultiplierPerYear: 1.365,
+    },
+    [InterestRateModel.MEDIUM]: {
+        baseRatePerYear: 0.02,
+        multiplerPerYear: 0.225,
+        jumpMultiplierPerYear: 1.5,
+    },
+    [InterestRateModel.VOLATILE]: {
+        baseRatePerYear: 0.025,
+        multiplerPerYear: 0.225,
+        jumpMultiplierPerYear: 5,
+    },
+};
 
-    const modelDefinitions: {
-        [key: string]: IModelDefinition;
-    } = {
-        StableRateModel: {
-            blocksPerYear: 365 * 24 * 60 * 60,
-            baseRatePerYear: ethers.utils.parseEther("0"),
-            multiplerPerYear: ethers.utils.parseEther("0.05"),
-            jumpMultiplierPerYear: ethers.utils.parseEther("1.365"),
-            kink: ethers.utils.parseEther("0.8"),
-            owner: deployer,
-            name: "StableRateModel",
-        },
-        MediumRateModel: {
-            blocksPerYear: 365 * 24 * 60 * 60,
-            baseRatePerYear: ethers.utils.parseEther("0.02"),
-            multiplerPerYear: ethers.utils.parseEther("0.225"),
-            jumpMultiplierPerYear: ethers.utils.parseEther("1.25"),
-            kink: ethers.utils.parseEther("0.8"),
-            owner: deployer,
-            name: "MediumRateModel",
-        },
-        VolatileRateModel: {
-            blocksPerYear: 365 * 24 * 60 * 60,
-            baseRatePerYear: ethers.utils.parseEther("0.025"),
-            multiplerPerYear: ethers.utils.parseEther("0.225"),
-            jumpMultiplierPerYear: ethers.utils.parseEther("5"),
-            kink: ethers.utils.parseEther("0.8"),
-            owner: deployer,
-            name: "VolatileRateModel",
-        },
-    };
+const lookupMapOfKinks: Record<InterestRateModel, string> = {
+    [InterestRateModel.STABLE]: '0.8',
+    [InterestRateModel.MEDIUM]: '0.8',
+    [InterestRateModel.VOLATILE]: '0.8',
+}
 
-    for (let key of Object.keys(modelDefinitions)) {
-        const def = modelDefinitions[key];
-        const existingDeploy = await getOrNull(def.name);
-        if (existingDeploy) continue;
-
-        await deploy(def.name, {
-            from: deployer,
-            log: true,
-            contract: "contracts/JumpRateModelV4.sol:JumpRateModelV4",
-            args: [
-                def.blocksPerYear, // seconds per year
-                def.baseRatePerYear, // base rate per year
-                def.multiplerPerYear, // multiplier per year
-                def.jumpMultiplierPerYear, // jump multiplier per year
-                def.kink, // kink
-                def.owner,
-                def.name,
-            ],
-        });
+const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
+    const models = Object.values(InterestRateModel)
+    for (const model of models) {
+        await deployRateModel(model, hre)
     }
 };
 
-const tags = ["rate-models"];
+async function deployRateModel(model: InterestRateModel, hre: HardhatRuntimeEnvironment) {
+    const baseRates = lookupMapOfBaseRates[model];
+    const existingDeploy = await hre.deployments.getOrNull(model);
+    if (existingDeploy) {
+        return;
+    }
+
+    const deployer = await getDeployerAddress(hre)
+    await hre.deployments.deploy(model, {
+        from: deployer,
+        log: true,
+        contract: 'contracts/JumpRateModelV4.sol:JumpRateModelV4',
+        args: [
+            getBlocksPerYear(hre),
+            normalizeRate(baseRates.baseRatePerYear, hre),
+            normalizeRate(baseRates.multiplerPerYear, hre),
+            normalizeRate(baseRates.jumpMultiplierPerYear, hre),
+            hre.ethers.utils.parseEther(lookupMapOfKinks[model]),
+            deployer, // Owner
+            model,
+        ],
+    });
+}
+
+function normalizeRate(rate: number, hre: HardhatRuntimeEnvironment): BigNumber {
+    const secondsPerBlock = getSecondsPerBlock(hre);
+    const normalizedRate = String(rate / secondsPerBlock);
+    return hre.ethers.utils.parseEther(normalizedRate);
+}
+
+const tags = ['rate-models'];
 export { tags };
 
 export default func;

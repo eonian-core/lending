@@ -1526,6 +1526,6 @@ contract Comptroller is
     }
 
     function getBlockNumber() public view virtual returns (uint256) {
-        return block.timestamp;
+        return block.number;
     }
 }
