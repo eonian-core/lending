@@ -3,7 +3,8 @@ import { NetworkName } from "../types"
 
 const SECONDS_PER_YEAR = 31536000
 const SECONDS_PER_BLOCK: Record<NetworkName, number> = {
-    [NetworkName.BSC]: 3.0
+    [NetworkName.BSC]: 3.0,
+    [NetworkName.ZEN_TESTNET]: 6.0,
 }
 
 export function getSecondsPerBlock(hre: HardhatRuntimeEnvironment): number {
@@ -32,10 +33,9 @@ export function resolveNetwork(hre: HardhatRuntimeEnvironment): NetworkName | nu
         return getForkingNetwork()
     }
 
-    const networkNameString = hardhatNetwork.split('_').at(0)
-    const networkName = Object.values(NetworkName).find(networkName => networkName.toLowerCase() === networkNameString)
+    const networkName = Object.values(NetworkName).find(networkName => networkName.toLowerCase() === hardhatNetwork)
     if (!networkName) {
-        throw new Error(`Unable to resolve network from: ${hardhatNetwork}, got: ${networkNameString}!`)
+        throw new Error(`Unable to resolve network from: ${hardhatNetwork}, got: ${hardhatNetwork}!`)
     }
     return networkName
 }

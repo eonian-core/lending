@@ -27,6 +27,10 @@ const config: HardhatUserConfig = {
     },
     networks: {
         hardhat: getHardhatNetworkConfiguration(),
+        zen_testnet: {
+            url: process.env.ZEN_TESTNET_RPC_URL,
+            accounts: [process.env.ZEN_TESTNET_DEPLOYER_PRIVATE_KEY!]
+        }
     },
     namedAccounts: {
         deployer: {
