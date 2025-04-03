@@ -16,6 +16,8 @@ task("initial-setup", "Performs initial setup of the protocol")
         await runTask(hre, 'oracle/deploy', { name: args.oracleName, contract: args.oracleContract })
         await runTask(hre, 'oracle/init', { name: args.oracleName })
 
+        await runTask(hre, 'reward-distributor/init')
+
         await runTask(hre, 'markets/support')
         await runTask(hre, 'markets/sync-params')
     });
