@@ -8,8 +8,10 @@ import "@typechain/hardhat";
 import "hardhat-deploy";
 import "solidity-coverage";
 
-import "./tasks";
 import { getHardhatNetworkConfiguration } from "./config/fork";
+import { getZenChainTestnetConfiguration } from "./config/networks";
+
+import "./tasks";
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -27,10 +29,7 @@ const config: HardhatUserConfig = {
     },
     networks: {
         hardhat: getHardhatNetworkConfiguration(),
-        zen_testnet: {
-            url: process.env.ZEN_TESTNET_RPC_URL,
-            accounts: [process.env.ZEN_TESTNET_DEPLOYER_PRIVATE_KEY!]
-        }
+        zen_testnet: getZenChainTestnetConfiguration()
     },
     namedAccounts: {
         deployer: {

@@ -1,4 +1,4 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types"
+import { HardhatRuntimeEnvironment, NetworkUserConfig } from "hardhat/types"
 import { NetworkName } from "../types"
 
 const SECONDS_PER_YEAR = 31536000
@@ -50,4 +50,20 @@ export function getForkingNetwork(): NetworkName | null {
         return forkingNetwork as NetworkName
     }
     throw new Error(`Unknown forking network: ${forkingNetwork}`)
+}
+
+export function getZenChainTestnetConfiguration(): NetworkUserConfig {
+    return {
+        url: process.env.ZEN_TESTNET_RPC_URL,
+        accounts: [
+            process.env.ZEN_TESTNET_DEPLOYER_PRIVATE_KEY!,
+            ...(process.env.ZEN_TESTNET_TEST_PRIVATE_KEYS ? process.env.ZEN_TESTNET_TEST_PRIVATE_KEYS.split(',') : [])
+        ],
+        verify: {
+            etherscan: {
+                apiUrl: process.env.ZEN_TESTNET_API_URL,
+                apiKey: process.env.ZEN_TESTNET_API_KEY,
+            }
+        }
+    }
 }
