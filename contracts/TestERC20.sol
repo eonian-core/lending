@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol"; // Imported just to get the compiled artifact
 
 contract TestERC20 is ERC20 {
     constructor(string memory name, string memory symbol) ERC20(name, symbol) {}

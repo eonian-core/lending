@@ -1,0 +1,2 @@
+
+import './prepare-zen-testnet'

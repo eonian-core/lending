@@ -32,10 +32,12 @@ export enum OracleType {
     UNISWAP_V3_TWAP = 'UNISWAP_V3_TWAP',
     CHAINLINK = 'CHAINLINK',
     PYTH = 'PYTH',
+    TEST_SIMPLE = 'TEST_SIMPLE',
 }
 
 export enum NetworkName {
-    BSC = 'BSC'
+    BSC = 'BSC',
+    ZEN_TESTNET = 'ZEN_TESTNET',
 }
 
 export enum InterestRateModel {

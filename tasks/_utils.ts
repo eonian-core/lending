@@ -56,3 +56,22 @@ export async function getOwnerAddress(hre: HardhatRuntimeEnvironment): Promise<s
     const [signer] = await hre.ethers.getSigners()
     return signer.address
 }
+
+export async function measureNativeTokenSpentByDeployer<T>(hre: HardhatRuntimeEnvironment, fn: () => Promise<T>): Promise<T> {
+    const deployer = await getDeployerAddress(hre)
+    const balanceBefore = await hre.ethers.provider.getBalance(deployer)
+    try {
+        return await fn()
+    } catch (e) {
+        throw e
+    } finally {
+        const balanceAfter = await hre.ethers.provider.getBalance(deployer)
+        const balanceDifference = balanceBefore.sub(balanceAfter).toString()
+        if (balanceDifference !== '0') {
+            const balanceBeforeFormatted = hre.ethers.utils.formatEther(balanceBefore)
+            const balanceAfterFormatted = hre.ethers.utils.formatEther(balanceAfter)
+            const balanceDifferenceFormatted = hre.ethers.utils.formatEther(balanceDifference)
+            console.log(`[measureNativeTokenSpentByDeployer] Deployer ${deployer} now has ${balanceAfterFormatted} (before: ${balanceBeforeFormatted}, difference: ${balanceDifferenceFormatted})`)
+        }
+    }
+}

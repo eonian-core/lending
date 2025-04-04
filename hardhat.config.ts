@@ -8,8 +8,10 @@ import "@typechain/hardhat";
 import "hardhat-deploy";
 import "solidity-coverage";
 
-import "./tasks";
 import { getHardhatNetworkConfiguration } from "./config/fork";
+import { getZenChainTestnetConfiguration } from "./config/networks";
+
+import "./tasks";
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -27,6 +29,7 @@ const config: HardhatUserConfig = {
     },
     networks: {
         hardhat: getHardhatNetworkConfiguration(),
+        zen_testnet: getZenChainTestnetConfiguration()
     },
     namedAccounts: {
         deployer: {

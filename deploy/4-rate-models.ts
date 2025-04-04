@@ -68,7 +68,7 @@ async function deployRateModel(model: InterestRateModel, hre: HardhatRuntimeEnvi
 
 function normalizeRate(rate: number, hre: HardhatRuntimeEnvironment): BigNumber {
     const secondsPerBlock = getSecondsPerBlock(hre);
-    const normalizedRate = String(rate / secondsPerBlock);
+    const normalizedRate = (rate / secondsPerBlock).toFixed(18);
     return hre.ethers.utils.parseEther(normalizedRate);
 }
 
