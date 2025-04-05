@@ -10,6 +10,7 @@ task("initial-setup", "Performs initial setup of the protocol")
 
         await runTask(hre, 'comptroller/deploy')
         await runTask(hre, 'comptroller/set-implementation')
+        await runTask(hre, 'comptroller/init')
 
         await runTask(hre, 'markets/deploy')
 

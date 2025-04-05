@@ -14,8 +14,9 @@ import { getUserLiquidity } from './helpers/get-user-liquidity'
 import { enterMarkets } from './helpers/enter-markets'
 import warp from './helpers/warp'
 import { BigNumber } from 'ethers'
+import { mintERC20 } from './helpers/mint-erc20'
 
-describe.only('Market interaction', () => {
+describe('Market interaction', () => {
     let userA: SignerWithAddress
     let userB: SignerWithAddress
 
@@ -241,7 +242,7 @@ describe.only('Market interaction', () => {
         }
     })
 
-    it.only('Should liquidate shortfall position', async () => {
+    it('Should liquidate shortfall position', async () => {
         // Set up userA to supply collateral
         const { marketContract: usdtMarketContract, tokenContract: usdtTokenContract, underlyingDecimals: usdtDecimals } = 
             await supplyToMarket(userA, 'USDT', 1000);
@@ -272,54 +273,52 @@ describe.only('Market interaction', () => {
         await wbnbMarketContract.accrueInterest();
         
         // Check that userA is now in shortfall
-        const afterInterestLiquidity = await getUserLiquidity(userA);
-        expect(afterInterestLiquidity.shortfall).to.not.be.eq('0')
-        
-        // Get balances before liquidation
-        const userBWbnbBalanceBefore = await wbnbTokenContract.balanceOf(userB.address);
-        const userBUsdtCTokenBalanceBefore = await usdtMarketContract.balanceOf(userB.address);
-        const protocolUsdtCTokenBalanceBefore = await usdtMarketContract.totalReserves();
+        const afterBorrowLiquidity = await getUserLiquidity(userA);
+        expect(afterBorrowLiquidity.shortfall).to.not.be.eq('0')
         
         // Calculate the repay amount (usually up to 50% of the borrowed amount in Compound V2)
         const userABorrowBalance = await wbnbMarketContract.borrowBalanceStored(userA.address);
         const repayAmount = userABorrowBalance.div(2); // Liquidate 50% of the debt
         
+        // Mint WBNB for userB so he can able to repay the debt
+        await mintERC20('WBNB', userB.address, 1000)
+
+        // Get balances before liquidation
+        const userBWbnbBalanceBefore = await wbnbTokenContract.balanceOf(userB.address);
+        const userBUsdtCTokenBalanceBefore = await usdtMarketContract.balanceOf(userB.address);
+        const protocolUsdtCTokenBalanceBefore = await usdtMarketContract.totalReserves();
+
         // Approve tokens for repayment
         await wbnbTokenContract.connect(userB).approve(wbnbMarketContract.address, repayAmount);
         
         // UserB liquidates UserA's position
-        /**
-         * 
-         * FAILS WITH
-         * Error: VM Exception while processing transaction: reverted with custom error 'LiquidateComptrollerRejection(17)'
-         * 
-         */
         await wbnbMarketContract.connect(userB).liquidateBorrow(
             userA.address,       // Borrower address
             repayAmount,         // Amount to repay
             usdtMarketContract.address  // cToken collateral to seize
         );
         
-        // // Get balances after liquidation
-        // const userBWbnbBalanceAfter = await wbnbTokenContract.balanceOf(userB.address);
-        // const userBUsdtCTokenBalanceAfter = await usdtMarketContract.balanceOf(userB.address);
-        // const protocolUsdtCTokenBalanceAfter = await usdtMarketContract.totalReserves();
+        // Get balances after liquidation
+        const userBWbnbBalanceAfter = await wbnbTokenContract.balanceOf(userB.address);
+        const userBUsdtCTokenBalanceAfter = await usdtMarketContract.balanceOf(userB.address);
+        const protocolUsdtCTokenBalanceAfter = await usdtMarketContract.totalReserves();
         
-        // // Verify that userB spent WBNB to repay the debt
-        // const wbnbSpent = userBWbnbBalanceBefore.sub(userBWbnbBalanceAfter);
-        // expect(wbnbSpent).to.be.eq(repayAmount);
+        // Verify that userB spent WBNB to repay the debt
+        const wbnbSpent = userBWbnbBalanceBefore.sub(userBWbnbBalanceAfter);
+        expect(wbnbSpent).to.be.eq(repayAmount);
         
-        // // Verify that userB received cUSDT tokens as reward
-        // const usdtCTokenReceived = userBUsdtCTokenBalanceAfter.sub(userBUsdtCTokenBalanceBefore);
-        // expect(usdtCTokenReceived).to.be.gt('0');
+        // Verify that userB received cUSDT tokens as reward
+        const usdtCTokenReceived = userBUsdtCTokenBalanceAfter.sub(userBUsdtCTokenBalanceBefore);
+        expect(usdtCTokenReceived.gt('0')).to.be.eq(true);
+
+        // Verify that protocol reserves increased
+        const reservesIncrease = protocolUsdtCTokenBalanceAfter.sub(protocolUsdtCTokenBalanceBefore);
+        expect(reservesIncrease.gt('0')).to.be.eq(true);
         
-        // // Verify that protocol reserves increased
-        // const reservesIncrease = protocolUsdtCTokenBalanceAfter.sub(protocolUsdtCTokenBalanceBefore);
-        // expect(reservesIncrease).to.be.gt('0');
-        
-        // // Verify that borrower's shortfall decreased
-        // const finalLiquidity = await getUserLiquidity(userA);
-        // expect(finalLiquidity.shortfall).to.be.lt(afterInterestLiquidity.shortfall);
+        // Verify that borrower's shortfall decreased
+        const finalLiquidity = await getUserLiquidity(userA);
+        const shortfallDecrease = BigNumber.from(afterBorrowLiquidity.shortfall).sub(BigNumber.from(finalLiquidity.shortfall));
+        expect(shortfallDecrease.gt('0')).to.be.eq(true);
     })
     
     it('Should accumulate reserves', async () => {})
