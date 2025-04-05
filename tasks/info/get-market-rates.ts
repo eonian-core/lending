@@ -42,6 +42,15 @@ function calculateApy(ratePerBlock: BigNumber, blocksPerYear: number): string {
     }
 }
 
+/**
+ * Formats a mantissa value (scaled by 1e18) as a percentage
+ */
+function formatMantissa(mantissa: BigNumber): string {
+    // Convert the mantissa to a percentage
+    const percentage = parseFloat(ethers.utils.formatUnits(mantissa, 16));
+    return percentage.toFixed(2) + "%";
+}
+
 task("get-market-rates", "Display supply and borrow APY rates for all markets")
     .setAction(async (_, hre) => {
         const blocksPerYear = getBlocksPerYear(hre);
@@ -49,6 +58,7 @@ task("get-market-rates", "Display supply and borrow APY rates for all markets")
         
         const marketConfigs = await getMarkets(hre);
         const marketAddresses = await getAddressesOfMarkets(hre);
+        const comptroller = await getComptrollerContract(hre);
         
         console.log("\nCurrent Market Rates");
         console.log("====================");
@@ -61,6 +71,13 @@ task("get-market-rates", "Display supply and borrow APY rates for all markets")
                 // Get the current supply and borrow rates per block
                 const supplyRatePerBlock = await market.supplyRatePerBlock();
                 const borrowRatePerBlock = await market.borrowRatePerBlock();
+                
+                // Get the reserve factor
+                const reserveFactorMantissa = await market.reserveFactorMantissa();
+                
+                // Get the collateral factor from Comptroller
+                const marketInfo = await comptroller.markets(marketAddress);
+                const collateralFactorMantissa = marketInfo[1]; // Second item in the tuple
                 
                 // For diagnostic purposes, log the raw rates
                 console.log(`\nMarket: ${marketKey}`);
@@ -77,6 +94,9 @@ task("get-market-rates", "Display supply and borrow APY rates for all markets")
                 const totalBorrows = await market.totalBorrows();
                 const tokenDecimals = await market.decimals();
                 
+                // Get total reserves
+                const totalReserves = await market.totalReserves();
+                
                 // Get utilization rate
                 const totalLiquidity = cash.add(totalBorrows);
                 const utilizationRate = totalLiquidity.gt(0) 
@@ -86,14 +106,22 @@ task("get-market-rates", "Display supply and borrow APY rates for all markets")
                 // Format cash and borrows with proper decimals
                 const formattedCash = ethers.utils.formatUnits(cash, tokenDecimals);
                 const formattedBorrows = ethers.utils.formatUnits(totalBorrows, tokenDecimals);
+                const formattedReserves = ethers.utils.formatUnits(totalReserves, tokenDecimals);
+                
+                // Format factors as percentages
+                const reserveFactor = formatMantissa(reserveFactorMantissa);
+                const collateralFactor = formatMantissa(collateralFactorMantissa);
                 
                 // Get token symbol from the underlying token address
                 const underlyingTokenSymbol = marketKey;
                 
                 console.log(`Supply APY: ${supplyApy}`);
                 console.log(`Borrow APY: ${borrowApy}`);
+                console.log(`Reserve Factor: ${reserveFactor}`);
+                console.log(`Collateral Factor: ${collateralFactor}`);
                 console.log(`Total Liquidity: ${formattedCash} ${underlyingTokenSymbol}`);
                 console.log(`Total Borrows: ${formattedBorrows} ${underlyingTokenSymbol}`);
+                console.log(`Total Reserves: ${formattedReserves} ${underlyingTokenSymbol}`);
                 console.log(`Utilization Rate: ${utilizationRate}`);
             } catch (err: any) {
                 console.error(`Error fetching rates for ${marketKey}: ${err.message}`);
