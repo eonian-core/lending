@@ -321,5 +321,50 @@ describe('Market interaction', () => {
         expect(shortfallDecrease.gt('0')).to.be.eq(true);
     })
     
-    it('Should accumulate reserves', async () => {})
+    it('Should accumulate reserves', async () => {
+        // Make initial supply on behalf of another user to provide liquidity
+        const { marketContract, underlyingDecimals } = 
+            await supplyToMarket(userB, 'USDT', 1000);
+        
+        // Setup collateral factor
+        await silentConsole(async () => await hre.run('markets/sync-params'));
+        
+        // Get initial reserves
+        const initialReserves = await marketContract.totalReserves();
+        
+        // Verify initial reserves are zero
+        expect(initialReserves).to.be.eq('0');
+        
+        // UserA supplies collateral and borrows
+        await supplyToMarket(userA, 'USDT', 500);
+        await enterMarkets(userA, 'USDT');
+        
+        // Borrow a significant amount to generate interest
+        const borrowAmount = hre.ethers.utils.parseUnits('300', underlyingDecimals);
+        await marketContract.connect(userA).borrow(borrowAmount);
+        
+        // Move time forward to accrue interest (15 days)
+        await warp(60 * 60 * 24 * 15);
+        
+        // Trigger interest accrual
+        await marketContract.accrueInterest();
+        
+        // Get updated reserves
+        const updatedReserves = await marketContract.totalReserves();
+        
+        // Verify reserves have increased
+        expect(updatedReserves.gt(initialReserves)).to.be.eq(true);
+        
+        // Make a new transaction to further update reserves
+        await marketContract.connect(userA).borrowBalanceCurrent(userA.address);
+        
+        // Get final reserves after another update
+        const finalReserves = await marketContract.totalReserves();
+        
+        // Verify that reserves accumulated progressively
+        expect(finalReserves.gte(updatedReserves)).to.be.eq(true);
+        
+        // Verify final reserves are greater than zero
+        expect(finalReserves.gt('0')).to.be.eq(true);
+    })
 })
