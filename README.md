@@ -1,3 +1,3 @@
-# Mendi Finance - Lending Protocol
+# Eonian Lending Protocol
 
-A Compound Fork.
+A Compound v2 Fork based on Mendi Finance, with additional security patches.
